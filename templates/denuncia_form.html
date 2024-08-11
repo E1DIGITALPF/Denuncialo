@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <title>Enviar Denuncia Anónima</title>
+</head>
+<body class="bg-light">
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h2 class="text-center mb-4">Enviar Denuncia Anónima</h2>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            <form action="{{ url_for('submit_denuncia') }}" method="POST">
+                <div class="form-group mb-3">
+                    <label for="name">Nombre (Opcional)</label>
+                    <input type="text" class="form-control" id="name" name="name" placeholder="Ingresa tu nombre si deseas (opcional)">
+                </div>
+                <div class="form-group mb-3">
+                    <label for="email">Correo Electrónico (Opcional)</label>
+                    <input type="email" class="form-control" id="email" name="email" placeholder="Ingresa tu correo electrónico si deseas (opcional)">
+                </div>
+                <div class="form-group mb-3">
+                    <label for="denuncia">Tu denuncia</label>
+                    <textarea class="form-control" id="denuncia" name="denuncia" rows="6" placeholder="Escribe los detalles de tu denuncia aquí..." required></textarea>
+                </div>
+                <div class="g-recaptcha" data-sitekey="{{ site_key }}"></div>
+                <button type="submit" class="btn btn-primary btn-block">Enviar de manera segura</button>
+            </form>            
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
