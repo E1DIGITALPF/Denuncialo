@@ -35,15 +35,15 @@ Sigue estos pasos para instalar y ejecutar la aplicación en tu entorno local:
 
 Crea un archivo .env en la raíz del proyecto con las siguientes variables:
 
-`ENCRYPTION_KEY=<tu_clave_de_cifrado>
-RECAPTCHA_SITE_KEY=<tu_clave_del_sitio_reCAPTCHA>
-RECAPTCHA_SECRET_KEY=<tu_clave_secreta_reCAPTCHA>`
+`ENCRYPTION_KEY=<tu_clave_de_cifrado>`
+`RECAPTCHA_SITE_KEY=<tu_clave_del_sitio_reCAPTCHA>`
+`RECAPTCHA_SECRET_KEY=<tu_clave_secreta_reCAPTCHA>`
 
 ### Inicializar la Base de Datos:
 
 `flask shell`
->>> from run import db
->>> db.create_all()
+`>>> from run import db`
+`>>> db.create_all()`
 
 ### Ejecutar la Aplicación:
 
