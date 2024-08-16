@@ -42,9 +42,9 @@ pip install -r requirements.txt
 
 4. Configure las variables de entorno:
 Descomente el archivo .env.example dejando solo .env y llenando con las variables:
-```ENCRYPTION_KEY=AFTER_RUNNING_GENERATE_KEY_PY```: Corre el script ```generateKey.py``` y pega aqui la cadena recibida.
-```RECAPTCHA_SITE_KEY=GOOGLE_RECAPTCHA_SITE_KEY```: Debes crear tus credenciales aca en la [consola de Google](https://www.google.com/recaptcha) y copiar aca la clave de tu sitio.
-```RECAPTCHA_SECRET_KEY=GOOGLE?RECAPTCHA_SECRET_KEY```: en la misma plataforma anterior copia la llave secreta del sitio y ponla aca. 
+- ```ENCRYPTION_KEY=AFTER_RUNNING_GENERATE_KEY_PY```: Corre el script ```generateKey.py``` y pega aqui la cadena recibida.
+- ```RECAPTCHA_SITE_KEY=GOOGLE_RECAPTCHA_SITE_KEY```: Debes crear tus credenciales aca en la [consola de Google](https://www.google.com/recaptcha) y copiar aca la clave de tu sitio.
+- ```RECAPTCHA_SECRET_KEY=GOOGLE?RECAPTCHA_SECRET_KEY```: en la misma plataforma anterior copia la llave secreta del sitio y ponla aca. 
 
 5. Inicializando la base de datos
 El script inicial crea la base de datos al arrancar por pruimera vez con el nombre ```denuncias.db``` en la carpeta /instance.
