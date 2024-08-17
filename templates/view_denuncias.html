@@ -8,11 +8,20 @@
 </head>
 <body>
     <div class="container mt-5">
-        <h1>Denuncias</h1>
+        <h1>Denuncias ciudadanas</h1>
         <div class="mb-3">
-            <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Ver Dashboard Principal</a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Ver dashboard principal</a>
             <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
         </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <h2>Denuncias activas</h2>
         <table class="table">
             <thead>
                 <tr>
@@ -21,23 +30,79 @@
                     <th>Email</th>
                     <th>Denuncia</th>
                     <th>Fecha</th>
+                    <th>Estado</th>
                     <th>Imágenes</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
-                {% for denuncia in denuncias %}
+                {% for denuncia in active_denuncias %}
                 <tr>
                     <td>{{ denuncia.id }}</td>
                     <td>{{ denuncia.name }}</td>
                     <td>{{ decrypted_emails[denuncia.id] or 'No email provided' }}</td>
                     <td>{{ denuncia.denuncia }}</td>
                     <td>{{ denuncia.timestamp }}</td>
+                    <td>{{ 'Confirmada' if denuncia.confirmed else 'Pendiente' }}</td>
                     <td>
                         {% if denuncia.image_filenames %}
                             {% for filename in denuncia.image_filenames.split(',') %}
                                 <img src="{{ url_for('uploaded_file', filename=filename) }}" width="100">
                             {% endfor %}
                         {% endif %}
+                    </td>
+                    <td>
+                        {% if not denuncia.confirmed %}
+                            <form action="{{ url_for('confirm_denuncia', denuncia_id=denuncia.id) }}" method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-success btn-sm">Confirmar</button>
+                            </form>
+                            <form action="{{ url_for('delete_denuncia', denuncia_id=denuncia.id) }}" method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro de que desea eliminar esta denuncia?')">Eliminar</button>
+                            </form>
+                        {% endif %}
+                        <form action="{{ url_for('archive_denuncia', denuncia_id=denuncia.id) }}" method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-warning btn-sm">Archivar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2>Denuncias archivadas</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Denuncia</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                    <th>Imágenes</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for denuncia in archived_denuncias %}
+                <tr>
+                    <td>{{ denuncia.id }}</td>
+                    <td>{{ denuncia.name }}</td>
+                    <td>{{ decrypted_emails[denuncia.id] or 'Sin email' }}</td>
+                    <td>{{ denuncia.denuncia }}</td>
+                    <td>{{ denuncia.timestamp }}</td>
+                    <td>{{ 'Confirmada' if denuncia.confirmed else 'Pendiente' }}</td>
+                    <td>
+                        {% if denuncia.image_filenames %}
+                            {% for filename in denuncia.image_filenames.split(',') %}
+                                <img src="{{ url_for('uploaded_file', filename=filename) }}" width="100">
+                            {% endfor %}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form action="{{ url_for('unarchive_denuncia', denuncia_id=denuncia.id) }}" method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-info btn-sm">Desarchivar</button>
+                        </form>
                     </td>
                 </tr>
                 {% endfor %}

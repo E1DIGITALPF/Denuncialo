@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    <title>Enviar Denuncia Anónima</title>
+    <title>Enviar denuncia anónima</title>
 </head>
 <body class="bg-light">
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <h2 class="text-center mb-4">Enviar Denuncia Anónima</h2>
+            <h2 class="text-center mb-4">Enviar denuncia anónima</h2>
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
@@ -25,7 +25,7 @@
                     <input type="text" class="form-control" id="name" name="name" placeholder="Ingresa tu nombre si deseas (opcional)">
                 </div>
                 <div class="form-group mb-3">
-                    <label for="email">Correo Electrónico (Opcional)</label>
+                    <label for="email">Correo electrónico (Opcional. Se recomienda usar alguno para confirmar la denuncia si es grave)</label>
                     <input type="email" class="form-control" id="email" name="email" placeholder="Ingresa tu correo electrónico si deseas (opcional)">
                 </div>
                 <div class="form-group mb-3">
@@ -33,9 +33,9 @@
                     <textarea class="form-control" id="denuncia" name="denuncia" rows="6" placeholder="Escribe los detalles de tu denuncia aquí..." required></textarea>
                 </div>
                 <div class="form-group mb-3">
-                    <label for="images">Adjuntar imágenes (máximo 5)</label>
+                    <label for="images">Adjuntar imagen (máximo 1)</label>
                     <input type="file" name="images" multiple>
-                    <small class="form-text text-muted">Puedes seleccionar hasta 5 imágenes (formatos permitidos: png, jpg, jpeg, gif)</small>
+                    <small class="form-text text-muted">(formatos permitidos: png, jpg, jpeg, gif)</small>
                 </div>
                 <div class="g-recaptcha mb-3" data-sitekey="{{ site_key }}"></div>
                 <button type="submit" class="btn btn-primary btn-block">Enviar de manera segura</button>
