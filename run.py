@@ -20,7 +20,7 @@ login_manager = LoginManager()
 limiter = Limiter(key_func=get_remote_address)
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY')
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'default-secret-key'
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///denuncias.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     UPLOAD_FOLDER = 'uploads'
@@ -49,8 +49,7 @@ class Denuncia(db.Model):
     encrypted_email = db.Column(db.LargeBinary, nullable=True)
     verification_code = db.Column(db.String(10), unique=True, nullable=False)
     image_filenames = db.Column(db.Text, nullable=True)
-    confirmed = db.Column(db.Boolean, default=False)
-    archived = db.Column(db.Boolean, default=False)
+    status = db.Column(db.String(20), default='pendiente')
 
     def get_decrypted_email(self, cipher_suite):
         if self.encrypted_email:
@@ -74,9 +73,9 @@ def create_app(config_class=Config):
         db.create_all()
         
         inspector = db.inspect(db.engine)
-        if 'confirmed' not in [c['name'] for c in inspector.get_columns('denuncia')]:
+        if 'status' not in [c['name'] for c in inspector.get_columns('denuncia')]:
             with db.engine.connect() as conn:
-                conn.execute(text('ALTER TABLE denuncia ADD COLUMN confirmed BOOLEAN DEFAULT FALSE'))
+                conn.execute(text('ALTER TABLE denuncia ADD COLUMN status VARCHAR(20) DEFAULT "pendiente"'))
                 conn.commit()
 
     @login_manager.user_loader
@@ -89,13 +88,13 @@ def create_app(config_class=Config):
 
     @app.route('/dashboard')
     def dashboard():
-        denuncias = Denuncia.query.filter_by(confirmed=True).order_by(Denuncia.timestamp.desc()).all()
+        denuncias = Denuncia.query.filter_by(status='activa').order_by(Denuncia.timestamp.desc()).all()
         verification_message = session.pop('verification_message', None)
         return render_template('dashboard.html', denuncias=denuncias, verification_message=verification_message)
 
     @app.route('/submit', methods=['GET', 'POST'])
     @limiter.limit("5 per minute")
-    def submit_denuncia():
+    def enviar_denuncia():
         if request.method == 'POST':
             try:
                 name = request.form.get('name', '')
@@ -114,11 +113,11 @@ def create_app(config_class=Config):
                 recaptcha_response = request.form['g-recaptcha-response']
                 if not verify_recaptcha(recaptcha_response, app.config['RECAPTCHA_SECRET_KEY']):
                     flash('Verificación de reCAPTCHA fallida. Por favor, inténtelo de nuevo.', 'error')
-                    return redirect(url_for('submit_denuncia'))
+                    return redirect(url_for('enviar_denuncia'))
 
                 if not denuncia:
                     flash('La denuncia no puede estar vacía.', 'error')
-                    return redirect(url_for('submit_denuncia'))
+                    return redirect(url_for('enviar_denuncia'))
 
                 encrypted_email = cipher_suite.encrypt(email.encode()) if email else None
                 verification_code = generate_verification_code()
@@ -128,7 +127,8 @@ def create_app(config_class=Config):
                     denuncia=denuncia, 
                     encrypted_email=encrypted_email,
                     verification_code=verification_code,
-                    image_filenames=','.join(image_filenames)
+                    image_filenames=','.join(image_filenames),
+                    status='pendiente'
                 )
                 db.session.add(new_denuncia)
                 db.session.commit()
@@ -139,7 +139,7 @@ def create_app(config_class=Config):
             except Exception as e:
                 app.logger.error(f"Error submitting denuncia: {str(e)}")
                 flash('Ocurrió un error al enviar la denuncia. Por favor, inténtelo de nuevo.', 'error')
-                return redirect(url_for('submit_denuncia'))
+                return redirect(url_for('enviar_denuncia'))
 
         return render_template('denuncia_form.html', site_key=app.config['RECAPTCHA_SITE_KEY'])
 
@@ -150,7 +150,7 @@ def create_app(config_class=Config):
     @app.route('/login', methods=['GET', 'POST'])
     def login():
         if current_user.is_authenticated:
-            return redirect(url_for('view_denuncias'))
+            return redirect(url_for('ver_denuncias'))
         if request.method == 'POST':
             username = request.form['username']
             password = request.form['password']
@@ -164,8 +164,8 @@ def create_app(config_class=Config):
             if user and user.check_password(password):
                 login_user(user)
                 next_page = request.args.get('next')
-                return redirect(next_page or url_for('view_denuncias'))
-            flash('Credenciales invalidos', 'error')
+                return redirect(next_page or url_for('ver_denuncias'))
+            flash('Credenciales incorrectas', 'error')
         return render_template('login.html', site_key=app.config['RECAPTCHA_SITE_KEY'])
 
     @app.route('/logout')
@@ -174,53 +174,49 @@ def create_app(config_class=Config):
         logout_user()
         return redirect(url_for('index'))
 
-    @app.route('/archive_denuncia/<int:denuncia_id>', methods=['POST'])
+    @app.route('/resolver_denuncia/<int:denuncia_id>', methods=['POST'])
     @login_required
-    def archive_denuncia(denuncia_id):
+    def resolver_denuncia(denuncia_id):
         denuncia = Denuncia.query.get_or_404(denuncia_id)
-        denuncia.archived = True
+        denuncia.status = 'resuelta'
         db.session.commit()
-        flash('Denuncia archivada exitosamente.', 'success')
-        return redirect(url_for('view_denuncias'))
+        flash('Denuncia marcada como resuelta exitosamente.', 'success')
+        return redirect(url_for('ver_denuncias'))
 
-    @app.route('/unarchive_denuncia/<int:denuncia_id>', methods=['POST'])
+    @app.route('/borra_denuncia/<int:denuncia_id>', methods=['POST'])
     @login_required
-    def unarchive_denuncia(denuncia_id):
+    def borra_denuncia(denuncia_id):
         denuncia = Denuncia.query.get_or_404(denuncia_id)
-        denuncia.archived = False
-        db.session.commit()
-        flash('Denuncia desarchivada exitosamente.', 'success')
-        return redirect(url_for('view_denuncias'))
-
-    @app.route('/delete_denuncia/<int:denuncia_id>', methods=['POST'])
-    @login_required
-    def delete_denuncia(denuncia_id):
-        denuncia = Denuncia.query.get_or_404(denuncia_id)
-        if denuncia.confirmed:
-            flash('No se puede borrar una denuncia confirmada.', 'error')
+        if denuncia.status in ['activa', 'resuelta']:
+            flash('No se puede borrar una denuncia activa o resuelta.', 'error')
         else:
             db.session.delete(denuncia)
             db.session.commit()
             flash('Denuncia eliminada exitosamente.', 'success')
-        return redirect(url_for('view_denuncias'))
+        return redirect(url_for('ver_denuncias'))
 
-    @app.route('/view_denuncias')
+    @app.route('/ver_denuncias')
     @login_required
-    def view_denuncias():
-        active_denuncias = Denuncia.query.filter_by(archived=False).all()
-        archived_denuncias = Denuncia.query.filter_by(archived=True).all()
-        cipher_suite = Fernet(app.config['ENCRYPTION_KEY'])
-        decrypted_emails = {denuncia.id: denuncia.get_decrypted_email(cipher_suite) for denuncia in active_denuncias + archived_denuncias}
-        return render_template('view_denuncias.html', active_denuncias=active_denuncias, archived_denuncias=archived_denuncias, decrypted_emails=decrypted_emails)
+    def ver_denuncias():
+        pending_denuncias = Denuncia.query.filter_by(status='pendiente').all()
+        active_denuncias = Denuncia.query.filter_by(status='activa').all()
+        resolved_denuncias = Denuncia.query.filter_by(status='resuelta').all()
+        decrypted_emails = {denuncia.id: denuncia.get_decrypted_email(cipher_suite) for denuncia in pending_denuncias + active_denuncias + resolved_denuncias}
+        return render_template('ver_denuncias.html', pending_denuncias=pending_denuncias, active_denuncias=active_denuncias, resolved_denuncias=resolved_denuncias, decrypted_emails=decrypted_emails)
 
-    @app.route('/confirm_denuncia/<int:denuncia_id>', methods=['POST'])
+    @app.route('/confirma_denuncia/<int:denuncia_id>', methods=['POST'])
     @login_required
-    def confirm_denuncia(denuncia_id):
+    def confirma_denuncia(denuncia_id):
         denuncia = Denuncia.query.get_or_404(denuncia_id)
-        denuncia.confirmed = True
+        denuncia.status = 'activa'
         db.session.commit()
         flash('Denuncia confirmada exitosamente.', 'success')
-        return redirect(url_for('view_denuncias'))
+        return redirect(url_for('ver_denuncias'))
+    
+    @app.route('/denuncias_resueltas')
+    def denuncias_resueltas():
+        denuncias = Denuncia.query.filter_by(status='resuelta').order_by(Denuncia.timestamp.desc()).all()
+        return render_template('denuncias_resueltas.html', denuncias=denuncias)
 
     return app
 
@@ -247,7 +243,7 @@ def init_app():
     
     if not os.path.exists(app.config['UPLOAD_FOLDER']):
         os.mkdir(app.config['UPLOAD_FOLDER'])
-
+        
     return app
 
 if __name__ == "__main__":

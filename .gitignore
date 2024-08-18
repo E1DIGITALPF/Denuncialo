@@ -1,5 +1,11 @@
+# Entornos virtuales (se recomiendan)
 /.env
 /venv
+# Logging
 logs
+# Para uso interno
 testSc.py
+# Cacheo
 __pycache__
+# Ruta de BD
+/instance
