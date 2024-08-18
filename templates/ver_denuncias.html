@@ -84,7 +84,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for denuncia in active_denuncias %}
+                {% for denuncia in denuncias_activas %}
                 <tr>
                     <td>{{ denuncia.id }}</td>
                     <td>{{ denuncia.name }}</td>
@@ -99,7 +99,7 @@
                         {% endif %}
                     </td>
                     <td>
-                        <form action="{{ url_for('resolver_denuncia', denuncia_id=denuncia.id) }}" method="POST" class="d-inline">
+                        <form action="{{ url_for('r_denuncia', denuncia_id=denuncia.id) }}" method="POST" class="d-inline">
                             <button type="submit" class="btn btn-warning btn-sm">Marcar como resuelta</button>
                         </form>
                     </td>
@@ -121,7 +121,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for denuncia in resolved_denuncias %}
+                {% for denuncia in denuncias_resueltas %}
                 <tr>
                     <td>{{ denuncia.id }}</td>
                     <td>{{ denuncia.name }}</td>
@@ -145,7 +145,7 @@
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="imageModalLabel">Imágenes de la Denuncia</h5>
+                    <h5 class="modal-title" id="imageModalLabel">Imágenes de la denuncia</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">

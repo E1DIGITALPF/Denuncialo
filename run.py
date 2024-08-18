@@ -174,9 +174,9 @@ def create_app(config_class=Config):
         logout_user()
         return redirect(url_for('index'))
 
-    @app.route('/resolver_denuncia/<int:denuncia_id>', methods=['POST'])
+    @app.route('/r_denuncia/<int:denuncia_id>', methods=['POST'])
     @login_required
-    def resolver_denuncia(denuncia_id):
+    def r_denuncia(denuncia_id):
         denuncia = Denuncia.query.get_or_404(denuncia_id)
         denuncia.status = 'resuelta'
         db.session.commit()
@@ -199,10 +199,10 @@ def create_app(config_class=Config):
     @login_required
     def ver_denuncias():
         pending_denuncias = Denuncia.query.filter_by(status='pendiente').all()
-        active_denuncias = Denuncia.query.filter_by(status='activa').all()
-        resolved_denuncias = Denuncia.query.filter_by(status='resuelta').all()
-        decrypted_emails = {denuncia.id: denuncia.get_decrypted_email(cipher_suite) for denuncia in pending_denuncias + active_denuncias + resolved_denuncias}
-        return render_template('ver_denuncias.html', pending_denuncias=pending_denuncias, active_denuncias=active_denuncias, resolved_denuncias=resolved_denuncias, decrypted_emails=decrypted_emails)
+        denuncias_activas = Denuncia.query.filter_by(status='activa').all()
+        denuncias_resueltas = Denuncia.query.filter_by(status='resuelta').all()
+        decrypted_emails = {denuncia.id: denuncia.get_decrypted_email(cipher_suite) for denuncia in pending_denuncias + denuncias_activas + denuncias_resueltas}
+        return render_template('ver_denuncias.html', pending_denuncias=pending_denuncias, denuncias_activas=denuncias_activas, denuncias_resueltas=denuncias_resueltas, decrypted_emails=decrypted_emails)
 
     @app.route('/confirma_denuncia/<int:denuncia_id>', methods=['POST'])
     @login_required
@@ -216,7 +216,18 @@ def create_app(config_class=Config):
     @app.route('/denuncias_resueltas')
     def denuncias_resueltas():
         denuncias = Denuncia.query.filter_by(status='resuelta').order_by(Denuncia.timestamp.desc()).all()
-        return render_template('denuncias_resueltas.html', denuncias=denuncias)
+    
+        denuncias_serializadas = [{
+            'id': d.id,
+            'name': d.name,
+            'denuncia': d.denuncia,
+            'timestamp': d.timestamp.isoformat(),
+            'image_filenames': d.image_filenames
+        } for d in denuncias]
+    
+        decrypted_emails = {d.id: d.get_decrypted_email(cipher_suite) for d in denuncias}
+    
+        return render_template('denuncias_resueltas.html', denuncias=denuncias_serializadas, decrypted_emails=decrypted_emails)
 
     return app
 

@@ -22,15 +22,15 @@
             <form action="{{ url_for('enviar_denuncia') }}" method="POST" enctype="multipart/form-data">
                 <div class="form-group mb-3">
                     <label for="name">Nombre (Opcional)</label>
-                    <input type="text" class="form-control" id="name" name="name" placeholder="Ingresa tu nombre si deseas (opcional)">
+                    <input type="text" class="form-control" id="name" name="name" placeholder="Ingresa tu nombre si deseas (o usa un pseudónimo)">
                 </div>
                 <div class="form-group mb-3">
                     <label for="email">Correo electrónico (Opcional. Se recomienda usar alguno para confirmar la denuncia si es grave)</label>
-                    <input type="email" class="form-control" id="email" name="email" placeholder="Ingresa tu correo electrónico si deseas (opcional)">
+                    <input type="email" class="form-control" id="email" name="email" placeholder="Ingresa tu correo electrónico">
                 </div>
                 <div class="form-group mb-3">
                     <label for="denuncia">Tu denuncia</label>
-                    <textarea class="form-control" id="denuncia" name="denuncia" rows="6" placeholder="Escribe los detalles de tu denuncia aquí..." required></textarea>
+                    <textarea class="form-control" id="denuncia" name="denuncia" rows="6" placeholder="Escribe los detalles de tu denuncia aquí. Incluye cuantos detalles consideres posibles para verificar la veracidad." required></textarea>
                 </div>
                 <div class="form-group mb-3">
                     <label for="images">Adjuntar imagen (máximo 1)</label>
