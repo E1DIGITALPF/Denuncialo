@@ -1,106 +1,136 @@
-# Denuncialo - Plataforma para enviar y monitorear denuncias anonimas
+# Denuncialo
 
-Esta es una aplicación web basada en Flask que permite a los usuarios enviar denuncias anónimas y proporciona una interfaz de administración para ver y administrar estos informes.
+**Denuncialo** es una aplicación web desarrollada con Flask que permite a los usuarios enviar denuncias de manera anónima y segura. La plataforma incluye funcionalidades de cifrado, autenticación de usuarios y verificación de CAPTCHA para garantizar la seguridad y confidencialidad de los datos.
 
 ## Características
 
-- Envío de informes anónimos
-- Soporte para carga de archivos de imágenes
-- Integración de reCAPTCHA para prevención de spam
-- Almacenamiento de correo electrónico cifrado
-- Panel de administración para ver los informes enviados
-- Autenticación de usuario para acceso de administrador
+- **Envío de denuncias:** Los usuarios pueden enviar denuncias de manera segura. Cada denuncia puede incluir imágenes adjuntas y un correo electrónico cifrado opcional.
+- **Cifrado de correos electrónicos:** Los correos electrónicos proporcionados son cifrados usando `Fernet` para garantizar la privacidad.
+- **Gestión de denuncias:** Los administradores pueden visualizar, confirmar, marcar como resueltas y eliminar denuncias desde el panel de administración.
+- **Autenticación de usuarios:** Sistema de autenticación con protección por reCAPTCHA para evitar bots.
+- **Protección contra abuso:** Límites en la tasa de solicitudes para prevenir el abuso (5 solicitudes por minuto).
+- **Carga y almacenamiento de imágenes:** Los usuarios pueden adjuntar imágenes a sus denuncias, las cuales son almacenadas de manera segura en el servidor.
+- **Dashboard:** Los usuarios autenticados pueden ver el estado de las denuncias en un panel de control.
 
-## Requisitos previos
+## Tecnologías Usadas
 
-- Python 3.7+
+- Python (Flask)
+- SQLAlchemy (ORM para base de datos)
+- Flask-Migrate (Migraciones de base de datos)
+- Flask-Limiter (Límite de tasas)
+- Flask-Login (Gestión de autenticación)
+- Waitress (Servidor WSGI para producción)
+- reCAPTCHA de Google
+
+## Configuración
+
+### Requisitos
+
+- Python 3.x
 - pip
-- virtualenv (recomendado fervientemente)
+- Un entorno virtual (opcional, pero recomendado)
 
-## Configuración inicial
+### Instalación
 
-1. Clone el repositorio:
-```
-git clone https://github.com/E1DIGITALPF/Denuncialo.git
-```
-```
-cd Denuncialo
-```
+1. Clona el repositorio:
+    ```bash
+    git clone https://github.com/E1DIGITALPF/Denuncialo
+    cd denuncialo
+    ```
 
-2. Cree y active un entorno virtual:
-```
-python -m venv venv
-```
-```
-source venv/bin/activate # En Windows, use venv\Scripts\activate
-```
+2. Crea y activa un entorno virtual (opcional):
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # En Windows: venv\Scripts\activate
+    ```
 
-3. Instale los paquetes necesarios:
-```
-pip install -r requirements.txt
-```
+3. Instala las dependencias:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-4. Configure las variables de entorno:
-Descomente el archivo .env.example dejando solo .env y llenando con las variables:
-- ```ENCRYPTION_KEY=AFTER_RUNNING_GENERATE_KEY_PY```: Corre el script ```generateKey.py``` y pega aqui la cadena recibida.
-- ```RECAPTCHA_SITE_KEY=GOOGLE_RECAPTCHA_SITE_KEY```: Debes crear tus credenciales aca en la [consola de Google](https://www.google.com/recaptcha) y copiar aca la clave de tu sitio.
-- ```RECAPTCHA_SECRET_KEY=GOOGLE?RECAPTCHA_SECRET_KEY```: en la misma plataforma anterior copia la llave secreta del sitio y ponla aca. 
+4. Configura las variables de entorno:
+    - `SECRET_KEY`: Clave secreta para la aplicación Flask (se genera corriendo generarKey.py).
+    - `DATABASE_URL`: URL de la base de datos (por defecto usa SQLite).
+    - `ENCRYPTION_KEY`: Clave para cifrado de correos electrónicos (si no se proporciona, se genera corriendo generarKey.py).
+    - `RECAPTCHA_SITE_KEY`: Clave del sitio [reCAPTCHA de Google](https://www.google.com/recaptcha/).
+    - `RECAPTCHA_SECRET_KEY`: Clave secreta reCAPTCHA.
 
-5. Inicializando la base de datos
-El script inicial crea la base de datos al arrancar por pruimera vez con el nombre ```denuncias.db``` en la carpeta /instance.
+    Puedes configurar estas variables en un archivo `.env` o usar el archivo env.example.
 
-6. Cree un usuario administrador:
-```
-python create_admin.py
-```
-Siga las indicaciones para configurar un nombre de usuario y una contraseña de administrador.
+5. Inicializa la base de datos:
+    ```bash
+    flask db upgrade
+    ```
 
-7. Ejecute el servidor de desarrollo:
-```
-flask run
-```
+6. Crea la carpeta para las imágenes subidas (si no existe):
+    ```bash
+    mkdir uploads
+    ```
 
-8. Acceda a la aplicación en `http://localhost:5000`
+### Ejecución en desarrollo
 
-## Implementación de producción
+Para ejecutar la aplicación en modo desarrollo:
 
-Para la implementación de producción, considere los siguientes pasos:
+    ```bash
+    flask run
+    ```
+La aplicación estará disponible en http://127.0.0.1:5000/.
 
-1. Use un servidor WSGI de nivel de producción como Gunicorn:
-```
-pip install gunicorn
-gunicorn -w 4 -b 0.0.0.0:8000 "run:create_app()"
-```
+### Ejecución en producción
 
-2. Configure un proxy inverso (por ejemplo, Nginx) para manejar archivos estáticos y terminación SSL.
+Para ejecutar la aplicación en un entorno de producción utilizando Waitress:
 
-3. Utilice una base de datos de nivel de producción como PostgreSQL:
-- Instale PostgreSQL y el paquete psycopg2
-- Actualice `SQLALCHEMY_DATABASE_URI` en la clase Config para utilizar PostgreSQL
+1. Comenta la línea de desarrollo en `run.py`:
 
-4. Configure el registro adecuado:
-- Configure el registro de la aplicación para escribir en archivos
-- Configure la rotación de registros
+    ```python
+    # app.run(debug=True)
+    ```
 
-5. Utilice variables de entorno para toda la información confidencial (claves, URI de la base de datos, etc.)
+2. Descomenta la línea de producción:
 
-6. Asegúrese de que el modo DEBUG esté desactivado en producción:
-```python
-app.run(debug=False)
-```
+    ```python
+    serve(app, host="0.0.0.0", port=8080)
+    ```
 
-7. Realice copias de seguridad periódicas de su base de datos y de los archivos cargados.
+3. Ejecuta la aplicación:
 
-8. Configure la supervisión y las alertas para su aplicación.
+    ```bash
+    python app.py
+    ```
 
-9. Implemente medidas de seguridad adicionales:
-- Use HTTPS
-- Implemente límites de velocidad
-- Establezca políticas CORS adecuadas
-- Actualice las dependencias con regularidad
+La aplicación estará disponible en `http://<TU_DOMINIO>:8080/`.
 
-## Uso
+---
 
-- Los usuarios pueden enviar informes anónimos accediendo a la página principal y haciendo clic en "Enviar tu denuncia"
-- Los administradores pueden iniciar sesión haciendo clic en el botón "Inicio de sesión de administrador" y usando sus credenciales
-- Una vez que hayan iniciado sesión, los administradores pueden ver todos los informes enviados, incluidas las direcciones de correo electrónico descifradas.
+## Funcionalidades clave
+
+### Envío de denuncias
+
+- Los usuarios pueden enviar denuncias de forma anónima o con un correo electrónico cifrado.
+- Cada denuncia recibe un código de verificación único para su seguimiento.
+- Los administradores pueden revisar y cambiar el estado de las denuncias (pendiente, activa, resuelta).
+
+### Sistema de autenticación
+
+- Los administradores deben iniciar sesión para gestionar las denuncias.
+- Los usuarios no autenticados solo tienen acceso al envío de denuncias y al panel público.
+
+### Seguridad
+
+- La aplicación incluye protección contra bots mediante Google reCAPTCHA.
+- Los correos electrónicos son cifrados antes de almacenarse en la base de datos.
+- Las imágenes subidas se almacenan en un directorio protegido y se gestionan de forma segura.
+
+---
+
+## A futuro
+
+- Cifrar todo el contenido de la denuncia (para aumentar la cuota de recepción de contenido multimedia y que permanezca protegido contra filtraciones)
+- Mejor manejo de cuentas (en la actualidad solo es posible crear administradores mediante script. Se piensa en una cuenta SuperAdmin que se pueda crear con scripts solamente pero que maneje subcuentas de administradores desde el dashboard.)
+- Mejor seguimiento de denuncias: se piensa utilizar un sistema similar al de empresas de tracking registrando incidencias que generen metadatos en tiempo real.
+- Una UI simpática. Por ahora esto es el mero esqueleto. Se busca hacer algo lo suficientemente robusto como para que escale a todo nivel y cueste cero, tanto instalar como mantener.
+
+## ¿Colaboraciones?
+
+En la actualidad no se aceptan colaboraciones externas, pero en todo momento si puedes bifurcar y hacer los cambios que necesite.
