@@ -13,6 +13,8 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 import random
 import string
 from sqlalchemy import text
+# Produccion
+from waitress import serve
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -260,3 +262,9 @@ def init_app():
 if __name__ == "__main__":
     app = init_app()
     app.run(debug=True)
+
+
+### Comentar este bloque y descomentar el anterior para desarrollo
+### if __name__ == "__main__":
+###    app = init_app()
+###    serve(app, host="0.0.0.0", port=8080)
